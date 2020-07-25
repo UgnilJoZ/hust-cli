@@ -1,19 +1,18 @@
 #![feature(duration_zero)]
 use std::time::Duration;
-use std::io::Result;
-
+#[macro_use] extern crate serde_derive;
 extern crate serde;
 extern crate serde_xml;
-#[macro_use] extern crate serde_derive;
 extern crate reqwest;
-
+mod error;
+use error::Result;
 mod discovery;
-use discovery::discover;
+use discovery::find_bridges;
 mod bridge;
 
 fn main() -> Result<()> {
-    for url in discover(1, Duration::from_secs(2))? {
-        println!("{}", url);
+    for bridge in find_bridges(Duration::from_secs(2))? {
+        println!("{:?}", bridge?);
     }
     Ok(())
 }

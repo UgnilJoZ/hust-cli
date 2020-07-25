@@ -1,22 +1,34 @@
-use reqwest::get;
-use reqwest::Result;
+use reqwest::blocking::get;
+use crate::error::Result;
 
+#[derive(Deserialize, Debug)]
+pub struct BridgeDevice {
+	#[serde (rename = "UDN")]
+	pub udn: String,
+	#[serde (rename = "deviceType")]
+	pub device_type: String,
+	pub manufacturer: String,
+	#[serde (rename = "modelName")]
+	pub model_name: String,
+	#[serde (rename = "modelDescription")]
+	pub model_description: String,
+	#[serde (rename = "serialNumber")]
+	pub serial_number: String,
+	#[serde (rename = "friendlyName")]
+	pub friendly_name: String,
+}
 
-#[derive(Debug, Deserialize)]
-struct Bridge {
-	udn: String,
-	url_base: String,
-	device_type: String,
-	manufacturer: String,
-	model_name: String,
-	model_description: String,
-	serial_number: String,
-	friendly_name: String,
+#[derive(Deserialize, Debug)]
+pub struct Bridge {
+	#[serde (rename = "URLBase")]
+	pub url_base: String,
+	pub device: BridgeDevice,
 }
 
 impl Bridge {
-	async fn from_description_url(url: String) -> Result<Bridge> {
-		let response = get(&url).await?;
-		serde_xml::from_str(response.text().await?)
+	pub fn from_description_url(url: String) -> Result<Bridge> {
+		let response = get(&url)?.text()?;
+		let bridge: Bridge = serde_xml::from_str(&response)?;
+		Ok(bridge)
 	}
 }
