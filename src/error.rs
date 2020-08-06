@@ -12,7 +12,8 @@ pub enum Error {
     Reqwest(reqwest::Error),
     Xml(serde_xml::Error),
     ApiErrors(Vec<ApiError>),
-    Json(serde_json::Error),
+	Json(serde_json::Error),
+	NoBridgeFound,
 }
 
 impl From<std::io::Error> for Error {

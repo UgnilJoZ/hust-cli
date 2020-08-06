@@ -8,7 +8,7 @@ extern crate serde_json;
 extern crate serde_xml;
 use structopt::StructOpt;
 mod error;
-use error::Result;
+use error::{Result, Error};
 mod discovery;
 use discovery::find_bridges;
 mod bridge;
@@ -19,6 +19,7 @@ use config::Config;
 #[derive(StructOpt)]
 #[structopt(name = "hust", about = "Hue bridge client in Rust")]
 enum Opt {
+    /// Discover hue bridges in the network
     Discover {
         /// Timeout in seconds. Float values are accepted.
         #[structopt(short, long, default_value = "2")]
@@ -27,6 +28,10 @@ enum Opt {
         /// Maximum devices to find
         #[structopt(short, long)]
         max: Option<usize>,
+    },
+    /// Register a user on a bridge
+    Register {
+        bridge: Option<String>,
     }
 }
 
@@ -43,6 +48,25 @@ fn main() -> Result<()> {
             } else {
                 bridge_iter.collect()
             };
+            config.save()?;
+            println!("Config file written: {:?}", config::get_config_file());
+        }
+
+        Opt::Register{bridge: bridge_name} => {
+            let bridge = if let Some(bridge_id) = bridge_name {
+                config.bridges
+                .iter()
+                .filter(|&b| b.url_base == bridge_id)
+                .next()
+            } else {
+                config.bridges.get(0)
+            }.ok_or(Error::NoBridgeFound)?;
+
+            let username = bridge.register_user()?;
+
+            println!("User {} registered.", bridge.device.udn);
+            config.usernames.insert(bridge.device.udn.clone(), username);
+            config.save()?;
         }
     }
     Ok(())
