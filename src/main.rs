@@ -41,7 +41,11 @@ fn main() -> Result<()> {
     match opt {
         Opt::Discover{timeout, max} => {
             let bridge_iter = find_bridges(Duration::from_secs_f64(timeout))?
-                .inspect(|b| println!("{:?}", b))
+                .inspect(|b| match b {
+                    // serde error won't happen, prove me wrong; therefore unwrap
+                    Ok(b) => println!("{}", serde_json::to_string_pretty(&b).unwrap()),
+                    Err(e) => println!("{:?}", e),
+                })
                 .filter_map(|b| b.ok());
             config.bridges = if let Some(max_devices) = max {
                 bridge_iter.take(max_devices).collect()
