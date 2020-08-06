@@ -83,6 +83,7 @@ impl Iterator for BridgeFinder {
     }
 }
 
+/// Yield all Hue bridges you can find in the network within `timeout`.
 pub fn find_bridges(timeout: Duration) -> std::io::Result<BridgeFinder> {
     BridgeFinder::new(timeout)
 }
