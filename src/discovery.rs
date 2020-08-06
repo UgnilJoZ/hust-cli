@@ -1,9 +1,9 @@
-use std::net::UdpSocket;
-use std::time::{Duration, Instant};
-use std::io::{Error, ErrorKind};
-use std::collections::HashSet;
 use crate::bridge::Bridge;
 use crate::error::Result;
+use std::collections::HashSet;
+use std::io::{Error, ErrorKind};
+use std::net::UdpSocket;
+use std::time::{Duration, Instant};
 
 const DISCOVERY_TEXT: &[u8] = b"M-SEARCH * HTTP/1.1
 HOST: 239.255.255.250:1900
@@ -19,12 +19,12 @@ fn receive_answer(socket: &UdpSocket) -> std::io::Result<String> {
     let answer = String::from_utf8_lossy(&buf[0..answer_size]);
     let mut answer_lines = answer.lines();
     if let Some(firstline) = answer_lines.next() {
-        if ! firstline.starts_with("HTTP/1.1 200 OK") {
-            return Err(Error::from(ErrorKind::InvalidData))?
+        if !firstline.starts_with("HTTP/1.1 200 OK") {
+            return Err(Error::from(ErrorKind::InvalidData))?;
         }
         for line in answer_lines {
             if let Some(url) = line.strip_prefix("LOCATION: ") {
-                return Ok(String::from(url))
+                return Ok(String::from(url));
             }
         }
     }
@@ -58,10 +58,13 @@ impl Iterator for BridgeFinder {
     fn next(&mut self) -> Option<Result<Bridge>> {
         let time_spent = self.start.elapsed();
         if time_spent > self.timeout {
-            return None
+            return None;
         }
-        if let Err(e) = self.socket.set_read_timeout(Some(self.timeout - time_spent)) {
-            return Some(Err(e.into()))
+        if let Err(e) = self
+            .socket
+            .set_read_timeout(Some(self.timeout - time_spent))
+        {
+            return Some(Err(e.into()));
         }
         match receive_answer(&self.socket) {
             Ok(url) => {
@@ -73,12 +76,12 @@ impl Iterator for BridgeFinder {
                 }
             }
             Err(e) => {
-				if e.kind() == ErrorKind::WouldBlock {
-					self.next()
-				} else {
-					Some(Err(e.into()))
-				}
-			}
+                if e.kind() == ErrorKind::WouldBlock {
+                    self.next()
+                } else {
+                    Some(Err(e.into()))
+                }
+            }
         }
     }
 }
