@@ -15,6 +15,13 @@ mod bridge;
 pub use bridge::Bridge;
 mod config;
 use config::Config;
+mod lights;
+
+#[derive(StructOpt)]
+enum LightCommand {
+    /// List all lights of the default bridge.
+    List,
+}
 
 #[derive(StructOpt)]
 #[structopt(name = "hust", about = "Hue bridge client in Rust")]
@@ -32,7 +39,9 @@ enum Opt {
     /// Register a user on a bridge
     Register {
         bridge: Option<String>,
-    }
+    },
+    /// Several commands for light control
+    Light(LightCommand),
 }
 
 fn main() -> Result<()> {
@@ -42,7 +51,7 @@ fn main() -> Result<()> {
         Opt::Discover{timeout, max} => {
             let bridge_iter = find_bridges(Duration::from_secs_f64(timeout))?
                 .inspect(|b| match b {
-                    // serde error won't happen, prove me wrong; therefore unwrap
+                    // serde error won't happen, therefore unwrap
                     Ok(b) => println!("{}", serde_json::to_string_pretty(&b).unwrap()),
                     Err(e) => println!("{:?}", e),
                 })
@@ -71,6 +80,25 @@ fn main() -> Result<()> {
             println!("User {} registered.", bridge.device.udn);
             config.usernames.insert(bridge.device.udn.clone(), username);
             config.save()?;
+        }
+
+        Opt::Light(LightCommand::List) => {
+            let bridge = config.bridges.get(0)
+                .ok_or(Error::NoBridgeFound)?;
+
+            let username = config.usernames.get(&bridge.device.udn).unwrap();
+            for (number, light) in bridge.get_all_lights(&username)? {
+                println!("{}:\t{}", number, light.name);
+                println!("\t{}", light.uniqueid);
+                let switched = if light.state.on {
+                    "on"
+                } else {
+                    "off"
+                };
+                println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
+                println!("\t{}", light.productid);
+                println!();
+            }
         }
     }
     Ok(())

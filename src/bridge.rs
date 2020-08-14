@@ -1,4 +1,5 @@
 use crate::error::{ApiError, Result};
+use crate::lights::Light;
 use reqwest::blocking::get;
 use std::collections::HashMap;
 
@@ -47,10 +48,10 @@ impl Bridge {
 
     pub fn register_user(&self) -> Result<String> {
         let client = reqwest::blocking::Client::new();
-        let mut url = self.url_base.clone();
+		let mut url = self.url_base.clone();
+		url.push_str("api");
         let mut params = HashMap::new();
         params.insert("devicetype", "Hust Hue API client");
-        url.push_str("api");
         let response = client.post(&url).json(&params).send()?;
         let response: Vec<ApiResponseSection> = serde_json::from_reader(response)?;
         let mut errors = vec![];
@@ -66,6 +67,12 @@ impl Bridge {
                 return Ok(username.to_string());
             }
         }
-        Err(errors)?
+		Err(errors)?
+    }
+    
+    pub fn get_all_lights(&self, user: &str) -> Result<HashMap<String, Light>> {
+        let url = format!("{}api/{}/lights", self.url_base, user);
+        let response = get(&url)?;
+        Ok(serde_json::from_reader(response)?)
     }
 }
