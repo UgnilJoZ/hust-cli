@@ -126,9 +126,11 @@ fn main() -> Result<()> {
                     let username = config.usernames.get(&bridge.device.udn).unwrap();
                     if adjective == "on" {
                         bridge.switch_light(username, &light, true)?
-                    } else {
+                    } else if adjective == "off" {
                         bridge.switch_light(username, &light, false)?
-                    }
+                    } else {
+                        return Err(Error::Arbitrary("Verb has to be 'on' or 'off'.".to_string()))
+                    };
                 }
             }
         }

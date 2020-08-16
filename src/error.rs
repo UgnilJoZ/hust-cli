@@ -13,7 +13,8 @@ pub enum Error {
     Xml(serde_xml::Error),
     ApiErrors(Vec<ApiError>),
 	Json(serde_json::Error),
-	NoBridgeFound,
+    NoBridgeFound,
+    Arbitrary(String),
 }
 
 impl From<std::io::Error> for Error {
