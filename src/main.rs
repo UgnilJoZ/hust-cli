@@ -18,12 +18,6 @@ use config::Config;
 mod lights;
 
 #[derive(StructOpt)]
-enum LightCommand {
-    /// List all lights of the default bridge.
-    List,
-}
-
-#[derive(StructOpt)]
 #[structopt(name = "hust", about = "Hue bridge client in Rust")]
 enum Opt {
     /// Discover hue bridges in the network
@@ -41,7 +35,20 @@ enum Opt {
         bridge: Option<String>,
     },
     /// Several commands for light control
-    Light(LightCommand),
+    Light(LightOpt),
+}
+
+#[derive(StructOpt)]
+struct LightOpt {
+    #[structopt(short, long)]
+    bridge: Option<String>,
+    #[structopt(subcommand)]
+    subcommand: LightCommand,
+}
+
+#[derive(StructOpt)]
+enum LightCommand {
+    List,
 }
 
 fn main() -> Result<()> {
@@ -82,22 +89,34 @@ fn main() -> Result<()> {
             config.save()?;
         }
 
-        Opt::Light(LightCommand::List) => {
-            let bridge = config.bridges.get(0)
-                .ok_or(Error::NoBridgeFound)?;
+        Opt::Light(light_options) => {
+            let bridge = if let Some(specified_bridge) = light_options.bridge {
+                config.bridges
+                .iter()
+                .filter(|b| b.device.friendly_name == specified_bridge || b.device.udn == specified_bridge)
+                .next()
+            } else {
+                config.bridges
+                .get(0)
+            }
+            .ok_or(Error::NoBridgeFound)?;
 
-            let username = config.usernames.get(&bridge.device.udn).unwrap();
-            for (number, light) in bridge.get_all_lights(&username)? {
-                println!("{}:\t{}", number, light.name);
-                println!("\t{}", light.uniqueid);
-                let switched = if light.state.on {
-                    "on"
-                } else {
-                    "off"
-                };
-                println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
-                println!("\t{}", light.productid);
-                println!();
+            match light_options.subcommand {
+                LightCommand::List => {
+                    let username = config.usernames.get(&bridge.device.udn).unwrap();
+                    for (number, light) in bridge.get_all_lights(&username)? {
+                        println!("{}:\t{}", number, light.name);
+                        println!("\t{}", light.uniqueid);
+                        let switched = if light.state.on {
+                            "on"
+                        } else {
+                            "off"
+                        };
+                        println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
+                        println!("\t{}", light.productid);
+                        println!();
+                    }
+                }
             }
         }
     }
