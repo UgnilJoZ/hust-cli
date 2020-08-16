@@ -49,6 +49,11 @@ struct LightOpt {
 #[derive(StructOpt)]
 enum LightCommand {
     List,
+    Switch {
+        #[structopt(short, long, required(true))]
+        light: String,
+        adjective: String,
+    }
 }
 
 fn main() -> Result<()> {
@@ -115,6 +120,14 @@ fn main() -> Result<()> {
                         println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
                         println!("\t{}", light.productid);
                         println!();
+                    }
+                }
+                LightCommand::Switch{light, adjective} => {
+                    let username = config.usernames.get(&bridge.device.udn).unwrap();
+                    if adjective == "on" {
+                        bridge.switch_light(username, &light, true)?
+                    } else {
+                        bridge.switch_light(username, &light, false)?
                     }
                 }
             }

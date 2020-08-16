@@ -32,7 +32,7 @@ pub enum ApiResponseSection {
     #[serde(rename = "error")]
     Err(ApiError),
     #[serde(rename = "success")]
-    Success(HashMap<String, String>),
+    Success(HashMap<String, serde_json::Value>),
 }
 
 impl Bridge {
@@ -74,5 +74,32 @@ impl Bridge {
         let url = format!("{}api/{}/lights", self.url_base, user);
         let response = get(&url)?;
         Ok(serde_json::from_reader(response)?)
+    }
+
+    pub fn switch_light(&self, user: &str, light: &str, on: bool) -> Result<()> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}api/{}/lights/{}/state", self.url_base, user, light);
+        let mut params = HashMap::new();
+        params.insert("on", on);
+        let response = client
+            .put(&url)
+            .json(&params)
+            .send()?;
+        let response: Vec<ApiResponseSection> = serde_json::from_reader(response)?;
+        let mut errors = vec![];
+        let success = response
+            .into_iter()
+            .any(|section|
+                match section {
+                    ApiResponseSection::Success(_) => true,
+                    ApiResponseSection::Err(e) => {
+                        errors.push(e);
+                        false
+                    }
+                });
+        if success {
+            return Ok(())
+        } 
+        Err(errors)?
     }
 }
