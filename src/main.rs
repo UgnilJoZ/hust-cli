@@ -10,13 +10,16 @@ use structopt::StructOpt;
 mod error;
 use error::{Result, Error};
 mod discovery;
-use discovery::find_bridges;
+pub use discovery::find_bridges;
 mod bridge;
 pub use bridge::Bridge;
 mod config;
 use config::Config;
 mod lights;
 
+/// The CLI options.
+/// 
+/// These are the subcommands and flags.
 #[derive(StructOpt)]
 #[structopt(name = "hust", about = "Hue bridge client in Rust")]
 enum Opt {
@@ -56,6 +59,7 @@ enum LightCommand {
     }
 }
 
+/// Executes a CLI app to use this library.
 fn main() -> Result<()> {
     let mut config = Config::load().unwrap_or_default();
     let opt = Opt::from_args();

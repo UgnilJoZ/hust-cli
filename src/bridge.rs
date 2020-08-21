@@ -20,10 +20,17 @@ pub struct BridgeDevice {
     pub friendly_name: String,
 }
 
+/// An object to communicate with a bridge.
+/// 
+/// The struct attributes contain the static properties of the bridge.
+/// 
+/// The methods can be used for communication like commands.
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Bridge {
     #[serde(rename = "URLBase")]
+    /// The base URL of the bridge, which all `/api/` resources are below of.
     pub url_base: String,
+    /// The device properties of this bridge.
     pub device: BridgeDevice,
 }
 
@@ -36,16 +43,23 @@ pub enum ApiResponseSection {
 }
 
 impl Bridge {
+    /// Creates a Bridge object from a description URL like returned in SSDP discovery.
     pub fn from_description_url(url: String) -> Result<Bridge> {
         let response = get(&url)?.text()?;
         let bridge: Bridge = serde_xml::from_str(&response)?;
         Ok(bridge)
     }
 
+    /// The unique but user-friendly name of the bridge.
     pub fn user_readable_identifier(&self) -> &str {
         &self.device.friendly_name
     }
 
+    /// Register a user and return its name.
+    /// 
+    /// Save it to communicate further with the bridge, e.g. to switch lights.
+    /// 
+    /// Note that the button of the bridge has to be pressed.
     pub fn register_user(&self) -> Result<String> {
         let client = reqwest::blocking::Client::new();
 		let mut url = self.url_base.clone();
@@ -70,12 +84,24 @@ impl Bridge {
 		Err(errors)?
     }
     
+    /// List all lights connected to this bridge
+    /// 
+    /// The listed lights are bundled with their state. You have to
+    /// specify a user in order to be authenticated.
     pub fn get_all_lights(&self, user: &str) -> Result<HashMap<String, Light>> {
         let url = format!("{}api/{}/lights", self.url_base, user);
         let response = get(&url)?;
         Ok(serde_json::from_reader(response)?)
     }
 
+    /// Switch light on / off.
+    /// 
+    /// `user` is the user you have to register with `register_user`.
+    /// 
+    /// `light` is the identifier of the light. All identifiers can
+    /// be obtained by listing the dictionary keys of `get_all_lights`.
+    /// 
+    /// To switch the light off, please specify `on` as `false`.
     pub fn switch_light(&self, user: &str, light: &str, on: bool) -> Result<()> {
         let client = reqwest::blocking::Client::new();
         let url = format!("{}api/{}/lights/{}/state", self.url_base, user, light);
