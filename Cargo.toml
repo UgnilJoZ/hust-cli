@@ -3,6 +3,9 @@ name = "hust-cli"
 version = "0.1.0"
 authors = ["Jan Ole Zabel <jan.zabel@posteo.de>"]
 edition = "2018"
+description = "Hue bridge client"
+repository = "https://github.com/UgnilJoZ/hust-cli"
+license = "AGPL-3.0"
 
 [dependencies]
 hust = "^0"
