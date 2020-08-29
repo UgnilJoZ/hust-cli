@@ -1,4 +1,3 @@
-#![feature(duration_zero)]
 use std::time::Duration;
 extern crate structopt;
 use structopt::StructOpt;
