@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::process::exit;
 extern crate structopt;
 use structopt::StructOpt;
 #[macro_use]
@@ -9,6 +10,15 @@ mod config;
 extern crate hust;
 use hust::{find_bridges, Result, Error};
 use config::Config;
+
+fn trim_quotes(s: String) -> String {
+    s
+        .strip_prefix("\"")
+        .unwrap_or(&s)
+        .strip_suffix("\"")
+        .unwrap_or(&s)
+        .to_owned()
+}
 
 /// The CLI options.
 /// 
@@ -28,6 +38,8 @@ enum Opt {
     },
     /// Register a user on a bridge
     Register {
+        /// The bridge UDN
+        #[structopt(short, long)]
         bridge: Option<String>,
     },
     /// Several commands for light control
@@ -37,6 +49,7 @@ enum Opt {
 #[derive(StructOpt)]
 struct LightOpt {
     #[structopt(short, long)]
+    /// The bridge UDN
     bridge: Option<String>,
     #[structopt(subcommand)]
     subcommand: LightCommand,
@@ -75,18 +88,20 @@ fn main() -> Result<()> {
         }
 
         Opt::Register{bridge: bridge_name} => {
-            let bridge = if let Some(bridge_id) = bridge_name {
+            let bridge = if let Some(specified_bridge) = bridge_name {
                 config.bridges
                 .iter()
-                .filter(|&b| b.url_base == bridge_id)
+                .filter(|b| b.device.friendly_name == specified_bridge || b.device.udn == specified_bridge)
                 .next()
             } else {
-                config.bridges.get(0)
-            }.ok_or(Error::NoBridgeFound)?;
+                config.bridges
+                .get(0)
+            }
+            .ok_or(Error::NoBridgeFound)?;
 
-            let username = bridge.register_user()?;
+            let username = trim_quotes(bridge.register_user()?);
 
-            println!("User {} registered.", bridge.device.udn);
+            println!("User {} registered.", username);
             config.usernames.insert(bridge.device.udn.clone(), username);
             config.save()?;
         }
@@ -105,18 +120,22 @@ fn main() -> Result<()> {
 
             match light_options.subcommand {
                 LightCommand::List => {
-                    let username = config.usernames.get(&bridge.device.udn).unwrap();
-                    for (number, light) in bridge.get_all_lights(&username)? {
-                        println!("{}:\t{}", number, light.name);
-                        println!("\t{}", light.uniqueid);
-                        let switched = if light.state.on {
-                            "on"
-                        } else {
-                            "off"
-                        };
-                        println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
-                        println!("\t{}", light.productid);
-                        println!();
+                    if let Some(username) = config.usernames.get(&bridge.device.udn) {
+                        for (number, light) in bridge.get_all_lights(&username)? {
+                            println!("{}:\t{}", number, light.name);
+                            println!("\t{}", light.uniqueid);
+                            let switched = if light.state.on {
+                                "on"
+                            } else {
+                                "off"
+                            };
+                            println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
+                            println!("\t{}", light.productid);
+                            println!();
+                        }
+                    } else {
+                        println!("No user for this bridge available. Use 'hust register' while pressing the button on the bridge.");
+                        exit(-1);
                     }
                 }
                 LightCommand::Switch{light, adjective} => {

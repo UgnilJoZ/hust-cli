@@ -7,6 +7,10 @@ description = "Hue bridge client"
 repository = "https://github.com/UgnilJoZ/hust-cli"
 license = "AGPL-3.0"
 
+[[bin]]
+name = "hust"
+path = "src/main.rs"
+
 [dependencies]
 hust = "^0"
 structopt = "0.3"
