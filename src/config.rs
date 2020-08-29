@@ -1,5 +1,5 @@
-use crate::bridge::Bridge;
-use crate::error::Result;
+use hust::Bridge;
+use hust::error::Result;
 use std::collections::HashMap;
 use std::env::var;
 use std::fs::File;

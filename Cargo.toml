@@ -1,13 +1,12 @@
 [package]
-name = "hust"
+name = "hust-cli"
 version = "0.1.0"
 authors = ["Jan Ole Zabel <jan.zabel@posteo.de>"]
 edition = "2018"
 
 [dependencies]
-reqwest = {version = "0.10", features = ["blocking", "json"], default-features = false}
-serde = "0.8"
-serde_xml = "0.9"
-serde_derive = "0.8"
-serde_json = "0.8"
+hust = "^0"
 structopt = "0.3"
+serde_derive = "0.8"
+serde = "0.8"
+serde_json = "0.8"

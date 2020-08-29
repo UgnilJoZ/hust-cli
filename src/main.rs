@@ -1,21 +1,15 @@
 #![feature(duration_zero)]
 use std::time::Duration;
+extern crate structopt;
+use structopt::StructOpt;
 #[macro_use]
 extern crate serde_derive;
-extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
-extern crate serde_xml;
-use structopt::StructOpt;
-mod error;
-use error::{Result, Error};
-mod discovery;
-pub use discovery::find_bridges;
-mod bridge;
-pub use bridge::Bridge;
 mod config;
+extern crate hust;
+use hust::{find_bridges, Result, Error};
 use config::Config;
-mod lights;
 
 /// The CLI options.
 /// 
