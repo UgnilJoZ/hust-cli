@@ -129,7 +129,7 @@ fn main() -> Result<()> {
                             } else {
                                 "off"
                             };
-                            println!("\t{}, bri: {}, col: {}", switched, light.state.brightness, light.state.ct);
+                            println!("\t{}, bri: {}, col: {}", switched, light.state.bri, light.state.ct);
                             println!("\t{}", light.productid);
                             println!();
                         }
