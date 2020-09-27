@@ -12,7 +12,7 @@ name = "hust"
 path = "src/main.rs"
 
 [dependencies]
-hust = "^0"
+hust = "0.2"
 structopt = "0.3"
 serde_derive = "1.0"
 serde = "1.0"
