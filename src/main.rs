@@ -57,11 +57,37 @@ struct LightOpt {
 
 #[derive(StructOpt)]
 enum LightCommand {
+    /// Lists all lights of this bridge and their identifiers
     List,
+    /// Switches a light on or off.
+    /// 
+    /// Example: hust light switch -l 1 on
     Switch {
+        /// The light identifier
         #[structopt(short, long, required(true))]
         light: String,
+        /// "on" or "off"
         adjective: String,
+    },
+    /// Sets some state attribute of the light.
+    /// 
+    /// The following are available.
+    /// 
+    /// · on: a boolean value
+    /// 
+    /// · bri: The brightness, an int value in range 0..255
+    /// 
+    /// · ct: The colour tone, an int in range 0..65535
+    /// 
+    /// and a few others.
+    Set {
+        /// The light identifier
+        #[structopt(short, long, required(true))]
+        light: String,
+        /// The attribute to set
+        key: String,
+        /// The value of the attribute
+        value: serde_json::Value,
     }
 }
 
@@ -147,6 +173,10 @@ fn main() -> Result<()> {
                     } else {
                         return Err(Error::Arbitrary("Verb has to be 'on' or 'off'.".to_string()))
                     };
+                }
+                LightCommand::Set{light, key, value} => {
+                    let username = config.usernames.get(&bridge.device.udn).unwrap();
+                    bridge.modify_light(username, &light, &key, value).unwrap();
                 }
             }
         }
