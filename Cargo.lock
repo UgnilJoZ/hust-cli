@@ -226,6 +226,8 @@ checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
 [[package]]
 name = "hust"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f981a9e862ae19bd2a30b84544e9f37320445fa1bb2c53122963d9f63a417789"
 dependencies = [
  "reqwest",
  "serde",
@@ -236,7 +238,7 @@ dependencies = [
 
 [[package]]
 name = "hust-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "hust",
  "serde",
